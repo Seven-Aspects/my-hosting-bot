@@ -68,9 +68,7 @@ if config.create() == True:
         "ignore_folders": [
             "__pycache__",
             "System Volume Information",
-            "home",
             "docs",
-            "examples",
             "lib"
         ],
         "autorun": {
@@ -170,7 +168,7 @@ def get_buttons(type: str) -> list:
 
 
                 if os.path.isdir(folder):
-                    buttons[1].append('cd ' + str(folder.replace(os.getcwd(), 'home/')))
+                    buttons[1].append('cd ' + str(folder))
         
 
         case _:
@@ -188,8 +186,8 @@ def files_check(update: Update, current_dir: str = os.getcwd()) -> str:
 
 
     response = (
-        f"{update.message.from_user.mention_html()}@{SERVER_NAME}:~\\"
-        f"{current_dir.replace(ROOT_DIR, 'home\\', 1)}$\n\n"
+        f"{update.message.from_user.mention_html()}@{SERVER_NAME}:~"
+        f"{current_dir}$\n\n"
         "<b>ᅠᅠПапки:</b>\n" + "\n".join(dirs_list) + "\n\n"
         "<b>ᅠᅠФайлы:</b>\n" + "\n".join(files_list)
     )
@@ -201,17 +199,24 @@ def files_check(update: Update, current_dir: str = os.getcwd()) -> str:
 # Executing bash commands
 async def execute_command(command: list, cwd: str = os.getcwd()) -> str:
     try:
+        if command == []:
+            raise ValueError("Использование команды start остановлено")
+        
+
+        shell_flag = (platform.system() == "Windows")
+        command_to_run = ' '.join(command) if shell_flag else command
         result = subprocess.run(
-            command,
+            command_to_run,
             capture_output=True,
             text=True,
             encoding='utf-8',
             errors='replace',
             cwd=cwd,
-            shell=(platform.system() == "Windows"),
+            shell=shell_flag,
             timeout=10
         )
         output = result.stdout or result.stderr
+
         
         return output
     
@@ -219,6 +224,10 @@ async def execute_command(command: list, cwd: str = os.getcwd()) -> str:
     except subprocess.TimeoutExpired:
         logger.error("[execute_command()] Command execution timeout")
         return "⚠️ Превышено время выполнения команды"
+    
+
+    except ValueError as e:
+        return f"⚠️ {e}"
     
 
     except Exception as e:
@@ -365,7 +374,7 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = str(update.effective_user.id)
         cfg = get_config()
         
-        if user_id != cfg['bot']['admin_chat_id']:
+        if user_id not in ADMINS_CHAT:
             await update.message.reply_text("⛔ Только администратор может добавлять пользователей!")
             return
         
@@ -375,7 +384,10 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text("⚠️ Этот пользователь уже имеет доступ!")
                 return
             
-            cfg.get('users', {})[target_id] = {"cmd": {"status": "off", "dir": "home"}}
+            
+            cfg.get('users', {})[target_id] = {
+                "cmd": ROOT_DIR
+            }
             update_config(cfg)
             await update.message.reply_text(
                 f"✅ Пользователь [{target_id}](tg://user?id={target_id}) успешно добавлен!",
@@ -413,7 +425,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     user_id = str(update.effective_user.id)
     cfg = get_config()
     text = update.message.text
-    args = text.split()[1:] or []
+    args = text.split(' ')[1:] or []
     buttons = None
 
     logger.info(f"User {user_id} sent: {text}")
@@ -446,8 +458,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
 
-    current_dir = cfg.get('users', {}).get(user_id, {"cmd": "home"}).get('cmd')
-    current_dir = current_dir.replace('home', ROOT_DIR, 1)
+    current_dir = cfg.get('users', {}).get(user_id, {"cmd": ROOT_DIR}).get('cmd')
 
 
     try:
@@ -458,11 +469,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         match command[0].lower():
             case 'cd':
                 if args == []:
-                    new_dir = 'home'
+                    new_dir = ROOT_DIR
 
 
                 else:
-                    new_dir = os.path.normpath(os.path.join(current_dir.replace('home', ROOT_DIR, 1), ' '.join(args).replace('home', ROOT_DIR, 1)))
+                    new_dir = os.path.normpath(os.path.join(current_dir, ' '.join(args)))
                     
 
                     if not os.path.exists(new_dir):
@@ -470,9 +481,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
                         return
-                    
-
-                    new_dir = new_dir.replace(ROOT_DIR, 'home', 1)
 
 
                 cfg['users'][user_id]['cmd'] = new_dir
@@ -481,7 +489,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 update_config(cfg)
         
 
-                response = files_check(update, new_dir.replace('home', ROOT_DIR, 1))
+                response = files_check(update, new_dir)
 
 
             case 'ls':
@@ -662,7 +670,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
             case 'pm2':
                 await update.message.reply_text(
-                    f"{update.message.from_user.mention_html()}@{SERVER_NAME}:~\\{current_dir.replace(ROOT_DIR, 'home', 1)}$ {' '.join(command)}", 
+                    f"{update.message.from_user.mention_html()}@{SERVER_NAME}:~{current_dir}$ {' '.join(command)}", 
                     parse_mode=constants.ParseMode.HTML
                 )
 
@@ -673,7 +681,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
             case _:
-                response = await execute_command([command[0].lower()] if command[0].lower() != 'start' else [] + args, current_dir)
+                print([command[0]] + args)
+                response = await execute_command([command[0].lower() if command[0].lower() != 'start' else []] + args, current_dir)
                 response = response.replace('<', '').replace('>', '')
                 response = 'Ответ не получен' if response == '' or response is None else response
 
@@ -745,7 +754,7 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return
     
 
-    current_dir = cfg.get('users', {})[user_id].get('cmd', 'home').replace('home', ROOT_DIR, 1)
+    current_dir = cfg.get('users', {})[user_id].get('cmd', ROOT_DIR)
     document = update.message.document
     file_name = document.file_name
     file_path = os.path.join(current_dir, file_name)
