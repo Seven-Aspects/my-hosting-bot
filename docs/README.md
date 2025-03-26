@@ -24,5 +24,5 @@ vim config.json
 
 ### Second run
 ```bash
-python application_start.py
+pm2 start application_start.py
 ```
