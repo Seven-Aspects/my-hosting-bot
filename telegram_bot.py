@@ -198,7 +198,6 @@ def files_check(update: Update, current_dir: str = os.getcwd()) -> str:
 
 # Executing bash commands
 async def execute_command(command: list, cwd: str = os.getcwd()) -> str:
-    print(command)
     try:
         if command == [[]]:
             raise ValueError("Использование команды start остановлено")
