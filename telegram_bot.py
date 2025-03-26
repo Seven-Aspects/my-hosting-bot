@@ -37,13 +37,13 @@ from lib.DataBaze.databaze import (
 ROOT_DIR = os.getcwd()
 
 
-# Настройка PM2 (Module NodeJS)
+# Setting PM2 (Module NodeJS)
 pm2_path = "pm2"
 if platform.system() == "Windows":
     pm2_path = fr"C:\Users\{getpass.getuser()}\AppData\Roaming\npm\pm2.cmd"
 
 
-# Настройка логгера
+# Logger setup
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
     level=logging.INFO
@@ -56,12 +56,12 @@ logging.getLogger('httpx').setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
-# Инициализация базы данных
+# Initializing the database
 db = DataBaze('.')
 config = db.file('config')
 
 
-# Проверка и создание конфига
+# Checking and creating a config
 if config.create() == True:
     config.write('''{
     "system": {
@@ -92,13 +92,13 @@ if config.create() == True:
     logger.info("Default config successful writed in config.json")
 
 
-    logger.warning('Заполните данные в файле config.json')
+    logger.warning('Please fill in the data in config.json')
 
 
     quit()
 
 
-# Работа с конфигом
+# Working with config
 def get_config() -> dict:
     return config.read()
 
@@ -107,7 +107,7 @@ def update_config(new_config: dict) -> None:
     config.write(new_config)
 
 
-# Получение содержимого autorun
+# Getting autorun content
 def get_autorun() -> dict:
     autorun = {}
     autorun_folders = get_config().get('system', {}).get('autorun', [])
@@ -120,7 +120,7 @@ def get_autorun() -> dict:
     return autorun
 
 
-# Константы
+# Constants
 SERVER_NAME = get_config().get('system', {}).get('server_name', 'Server')
 IGNORE_FOLDERS = get_config().get('system', {}).get('ignore_folders', [])
 AUTORUN = get_autorun()
@@ -128,7 +128,7 @@ TOKEN = get_config().get('bot', {}).get('token')
 ADMINS_CHAT = get_config().get('bot', {}).get('admins_chat_id', [])
 
 
-# Функция получения содержимого папки
+# Function to get folder contents
 def parse_folder(dir: str = None) -> dict:
     result = {
         'folders': [],
@@ -147,7 +147,7 @@ def parse_folder(dir: str = None) -> dict:
     return result
 
 
-# Получение кнопок
+# Getting buttons
 def get_buttons(type: str) -> list:
     buttons = []
 
@@ -174,13 +174,13 @@ def get_buttons(type: str) -> list:
         
 
         case _:
-            logger.error("[get_buttons()] Неверное название типа кнопок")
+            logger.error("[get_buttons()] Invalid button type name")
         
 
     return buttons
 
 
-# Команда ls
+# Command ls
 def files_check(update: Update, current_dir: str = os.getcwd()) -> str:
     files = parse_folder(current_dir)
     files_list = [f"📄 {item}" for item in files['files']]
@@ -198,7 +198,7 @@ def files_check(update: Update, current_dir: str = os.getcwd()) -> str:
     return response
 
 
-# Исполнение bash команд
+# Executing bash commands
 async def execute_command(command: list, cwd: str = os.getcwd()) -> str:
     try:
         result = subprocess.run(
@@ -217,16 +217,16 @@ async def execute_command(command: list, cwd: str = os.getcwd()) -> str:
     
 
     except subprocess.TimeoutExpired:
-        logger.error("[execute_command()] Превышено время выполнения команды")
+        logger.error("[execute_command()] Command execution timeout")
         return "⚠️ Превышено время выполнения команды"
     
 
     except Exception as e:
-        logger.error(f"[execute_command()] Ошибка выполнения команды: {str(e)}")
+        logger.error(f"[execute_command()] Command execution error: {str(e)}")
         return f"⚠️ Ошибка выполнения команды: {str(e)}"
     
 
-# Обработка полученного ответа PM2
+# Processing the received PM2 response
 async def handle_pm2_output(output: str) -> str:
     try:
         output = re.sub(r'\x1b\[[0-9;]*[mK]', '', output).strip().replace('<', '').replace('>', '')
@@ -267,13 +267,13 @@ async def handle_pm2_output(output: str) -> str:
     
 
     except Exception as e:
-        logger.error(f'[handle_pm2_output()] Ошибка обработки ответа: {str(e)}')
+        logger.error(f'[handle_pm2_output()] Output processing error: {str(e)}')
 
 
         return
 
 
-# Команда /start
+# Command /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
     args = context.args
@@ -308,7 +308,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
-# Команда /help
+# Command /help
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
 
@@ -343,7 +343,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
-# Команда /user
+# Command /user
 async def user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
     
@@ -352,7 +352,7 @@ async def user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
 
-# Команда /link
+# Command /link
 async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
 
@@ -408,7 +408,7 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ Укажите ID пользователя: /remove <ID>")
 
 
-# Обработка сообщений
+# Message processing
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
     cfg = get_config()
@@ -419,7 +419,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     logger.info(f"User {user_id} sent: {text}")
     
 
-    # У пользователя нет прав на использования бота
+    # The user does not have permission to use the bot
     if user_id not in cfg.get('users', {}):
         logger.info(f"User {user_id} don't have a permissions")
 
@@ -430,7 +430,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     logger.info(f"User {user_id} have permissions")
 
     
-    # Игнорирование сообщений старше 2 минут
+    # Ignore messages older than 2 minutes
     message_date = update.message.date
 
 
@@ -444,8 +444,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     if time_difference.total_seconds() > 120:
         return
-    
-    # await update.message.reply_text(context.user_data)
 
 
     current_dir = cfg.get('users', {}).get(user_id, {"cmd": "home"}).get('cmd')
@@ -681,7 +679,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
     except Exception as e:
-        raise Exception(f'[handle_message()] Ошибка обработки сообщения: {str(e)}')
+        raise Exception(f'[handle_message()] Message processing error: {str(e)}')
     
 
     try:
@@ -730,19 +728,19 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
         else:
-            logger.error(f'[handle_message()] Ошибка отправки сообщения: {str(e)}')
+            logger.error(f'[handle_message()] Error sent: {str(e)}')
 
 
             raise e
 
 
-# Обработчик документов для команды upload
+# Document handler for the upload command
 async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
     cfg = get_config()
 
     
-    # У пользователя нет доступа к боту
+    # The user does not have access to the bot
     if user_id not in cfg.get('users', {}):
         return
     
@@ -754,7 +752,7 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     try:
         if os.path.exists(file_path):
-            # Запрос подтверждения на перезапись
+            # Request confirmation for overwriting
             context.user_data['pending_upload'] = {
                 'file_id': document.file_id,
                 'file_name': file_name,
@@ -769,7 +767,7 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 
         else:
-            # Скачивание файла
+            # File download
             file = await context.bot.get_file(document.file_id)
 
 
@@ -780,16 +778,16 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     
 
     except Exception as e:
-        raise Exception(f"[handle_document()] Ошибка обработки документа: {str(e)}")
+        raise Exception(f"[handle_document()] Document processing error: {str(e)}")
 
 
-# Запрос подтверждения на перезапись
+# Request confirmation for overwriting
 async def handle_upload_confirmation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
     cfg = get_config()
 
     
-    # У пользователя нет доступа к боту
+    # The user does not have access to the bot
     if user_id not in cfg.get('users', {}):
         return
     
@@ -823,12 +821,12 @@ async def handle_upload_confirmation(update: Update, context: ContextTypes.DEFAU
 
 
     except Exception as e:
-        raise Exception(f"[handle_upload_confirmation()] Ошибка подтверждения запроса: {str(e)}")
+        raise Exception(f"[handle_upload_confirmation()] Request confirmation error: {str(e)}")
     
 
-# Обработчик ошибок
+# Error handler
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    logger.error(f"Ошибка: {context.error}")
+    logger.error(f"Error: {context.error}")
     
 
     if ADMINS_CHAT != []:
@@ -840,14 +838,14 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                 )
 
 
-                logger.info(f'Сообщение об ошибке отправлено администратору {chat_id}')
+                logger.info(f'Error message sent to administrator {chat_id}')
 
 
         except Exception as e:
-            logger.error(f"[error_handler()] Ошибка при отправке сообщения: {str(e)}")
+            logger.error(f"[error_handler()] Error sending message: {str(e)}")
 
 
-# Уведомление о запуске
+# Launch notification
 async def post_init(application: Application) -> None:
     if ADMINS_CHAT != []:
         try:
@@ -858,21 +856,21 @@ async def post_init(application: Application) -> None:
                 )
 
 
-                logger.info(f'Сообщение о запуске отправлено администратору {chat_id}')
+                logger.info(f'Launch message sent to administrator {chat_id}')
 
 
         except Exception as e:
-            logger.error(f"[post_init()] Ошибка при отправке сообщения: {str(e)}")
+            logger.error(f"[post_init()] Error sending message: {str(e)}")
 
 
-# Основная функция
+# Main function
 def main() -> None:
     if platform.system() == "Windows":
         os.environ['PATH'] += r';C:\Program Files\nodejs'
     
 
     if not TOKEN:
-        logger.error("[main()] Токен бота не указан в config.json!")
+        logger.error("[main()] Bot token is not listed in config.json!")
 
 
     try:
@@ -880,13 +878,13 @@ def main() -> None:
 
 
     except Exception as e:
-        logger.error(f'[main()] Произошла ошибка при создании приложения: {str(e)}')
+        logger.error(f'[main()] An error occurred while creating the application: {str(e)}')
 
 
         return
     
 
-    # Регистрация обработчиков
+    # Registering handlers
     handlers = [
         MessageHandler(filters.Text(['Да', 'Нет']) & ~filters.COMMAND, handle_upload_confirmation),
         CommandHandler("start", start),
@@ -910,7 +908,7 @@ def main() -> None:
 
 
     except Exception as e:
-        logger.error(f"[main()] Произошла ошибка при инициализации бота: {str(e)}")
+        logger.error(f"[main()] An error occurred while initializing the bot: {str(e)}")
         
 
 if __name__ == "__main__":

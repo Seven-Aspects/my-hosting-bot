@@ -14,7 +14,7 @@ from lib.DataBaze.databaze import (
 )
 
 
-# Настройка логгера
+# Logger setup
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
     level=logging.INFO
@@ -24,12 +24,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# Настройка базы данных
+# Database configuration
 db = DataBaze('.')
 config = db.file('config')
 
 
-# Проверка и создание конфига
+# Create config if not exists
 if config.create() == True:
     config.write('''{
     "system": {
@@ -57,13 +57,13 @@ if config.create() == True:
 }''')
     
 
-    print('Заполните данные в файле config.json')
+    logger.warning('Please fill in the data in config.json')
 
 
     quit()
 
 
-# Работа с конфигом
+# Config operations
 def get_config() -> dict:
     return config.read()
 
@@ -72,7 +72,7 @@ def update_config(new_config: dict) -> None:
     config.write(new_config)
 
 
-# Получение игнорируемых папок
+# Get ignored folders
 def get_ignore_folders() -> list:
     ignore_folders = get_config().get('system', {}).get('ignore_folders', [])
 
@@ -84,20 +84,20 @@ def get_ignore_folders() -> list:
     return []
 
 
-# Константы
+# Constants
 CHECK_INTERVAL = 180
 PROCESS_IDS = {}
 IGNORE_FOLDERS = get_ignore_folders()
 PM2_CMD = "pm2.cmd" if platform.system() == "Windows" else "pm2"
 
 
-# Проверка соединения с интернетом
+# Internet connection check
 def check_internet() -> bool:
-    """Проверяет наличие интернет-соединения с помощью комбинации методов."""
+    """Check internet connection using combination of methods."""
     result = 0
 
 
-    # Проверка подключения через сокет к DNS-серверам
+    # Socket connection check
     hosts = [
         ('8.8.8.8', 53),  # Google DNS
         ('1.1.1.1', 53),  # Cloudflare DNS
@@ -120,7 +120,7 @@ def check_internet() -> bool:
             continue
 
 
-    # Проверка через ping нескольких хостов
+    # Ping check
     ping_hosts = ['8.8.8.8', '1.1.1.1']
     param = '-n' if platform.system().lower() == 'windows' else '-c'
 
@@ -155,7 +155,7 @@ def check_internet() -> bool:
     return True if result >= 2 else False
 
 
-# Обработка ответа от PM2
+# PM2 output processing
 def handle_pm2_output(output: str) -> str:
     processes = []
 
@@ -183,7 +183,7 @@ def parse_autorun(folder: str, files: list) -> list:
 
 
             if not os.path.exists(full_path):
-                logger.error(f'[parse_autorun()] Файл {full_path} не найден')
+                logger.error(f'[parse_autorun()] File not found: {full_path}')
                 
 
                 continue
@@ -207,31 +207,31 @@ def parse_autorun(folder: str, files: list) -> list:
                         PROCESS_IDS[proc[1]] = str(proc[0])
 
 
-                        logger.info(f"Успешно запущен процесс: {file_name} (ID: {proc[0]})")
+                        logger.info(f"Successfully started process: {file_name} (ID: {proc[0]})")
 
 
                         break
 
 
             except subprocess.CalledProcessError as e:
-                logger.error(f"[parse_autorun()] Ошибка запуска {file_name}: {e.stderr}")
+                logger.error(f"[parse_autorun()] Error starting {file_name}: {e.stderr}")
 
 
             except json.JSONDecodeError:
-                logger.error("[parse_autorun()]  Ошибка парсинга вывода PM2")
+                logger.error("[parse_autorun()] PM2 output parsing error")
 
 
     except Exception as e:
-        logger.error(f"[parse_autorun()] Ошибка обработки файлов папки: {str(e)}")
+        logger.error(f"[parse_autorun()] Folder processing error: {str(e)}")
 
 
     return processes
 
 
 def terminate_process(process_id: str) -> None:
-    """Остановка процесса с проверкой ID"""
+    """Stop process with ID validation"""
     if process_id is None:
-        logger.error("[terminate_process()] Неверный ID процесса")
+        logger.error("[terminate_process()] Invalid process ID")
 
 
         return
@@ -246,15 +246,15 @@ def terminate_process(process_id: str) -> None:
         )
 
 
-        logger.info(f"Процесс {process_id} остановлен")
+        logger.info(f"Process {process_id} stopped")
 
 
     except subprocess.CalledProcessError as e:
-        logger.error(f"[terminate_process()] Ошибка остановки {process_id}: {e.stderr}")
+        logger.error(f"[terminate_process()] Error stopping {process_id}: {e.stderr}")
 
 
 def stop_all() -> None:
-    """Остановка всех процессов с очисткой словаря"""
+    """Stop all processes and clear dictionary"""
     for name, pid in list(PROCESS_IDS.items()):
         terminate_process(str(pid))
 
@@ -263,8 +263,8 @@ def stop_all() -> None:
 
 
 def start_all() -> None:
-    """Запуск процессов с обработкой кодировки"""
-    logger.info('Запуск процессов')
+    """Start processes with encoding handling"""
+    logger.info('Starting processes')
 
 
     for item in get_config().get('system', {}).get('autorun', {}):
@@ -277,12 +277,11 @@ def start_all() -> None:
 
 
 def main():
-    """Улучшенный цикл с устойчивой обработкой состояния"""
     connection_lost = False
     fail_counter = 0
 
     try:
-        logger.info("Инициализация системы...")
+        logger.info("System initialization...")
 
 
         start_all()
@@ -295,7 +294,7 @@ def main():
             try:
                 if check_internet():
                     if connection_lost:
-                        logger.info("Соединение восстановлено! Перезапуск сервисов...")
+                        logger.info("Connection restored! Restarting services...")
 
 
                         start_all()
@@ -307,14 +306,14 @@ def main():
 
 
                     else:
-                        logger.info("Соединение стабильно")
+                        logger.info("Connection stable")
 
 
                 else:
                     fail_counter += 1
 
 
-                    logger.warning(f"Проблема с интернетом ({fail_counter})")
+                    logger.warning(f"Internet connection issue ({fail_counter})")
 
 
                     if process_status:
@@ -338,21 +337,21 @@ def main():
 
 
             except Exception as e:
-                logger.error(f"[main()] Ошибка: {str(e)}")
+                logger.error(f"[main()] Error: {str(e)}")
 
 
                 time.sleep(CHECK_INTERVAL)
 
 
     except KeyboardInterrupt:
-        logger.info("\nЗавершение работы...")
+        logger.info("Shutting down...")
 
 
         stop_all()
 
 
     except Exception as e:
-        logger.error(f"[main()] Фатальная ошибка: {str(e)}")
+        logger.error(f"[main()] Fatal error: {str(e)}")
 
 
         stop_all()
