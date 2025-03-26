@@ -198,8 +198,9 @@ def files_check(update: Update, current_dir: str = os.getcwd()) -> str:
 
 # Executing bash commands
 async def execute_command(command: list, cwd: str = os.getcwd()) -> str:
+    print(command)
     try:
-        if command == []:
+        if command == [[]]:
             raise ValueError("Использование команды start остановлено")
         
 
@@ -681,7 +682,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
             case _:
-                print([command[0]] + args)
                 response = await execute_command([command[0].lower() if command[0].lower() != 'start' else []] + args, current_dir)
                 response = response.replace('<', '').replace('>', '')
                 response = 'Ответ не получен' if response == '' or response is None else response
