@@ -320,6 +320,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 # Command /help
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
+    args = context.args
+
+
+    logger.info(f"User {user_id} use command /help {' '.join(args)}")
 
 
     if user_id not in [user_id for user_id in get_config()['users']]:
@@ -329,7 +333,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     
     
-    if context.args:
+    if args:
         return
     
     
@@ -355,18 +359,26 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 # Command /user
 async def user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
-    
+    args = context.args
 
-    if context.args:
+
+    logger.info(f"User {user_id} use command /user {' '.join(args)}")
+
+
+    if args:
         return
 
 
 # Command /link
 async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
+    args = context.args
 
-    
-    if context.args:
+
+    logger.info(f"User {user_id} use command /user {' '.join(args)}")
+
+
+    if args:
         return
 
 
