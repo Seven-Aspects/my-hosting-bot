@@ -31,30 +31,30 @@ config = db.file('config')
 
 # Create config if not exists
 if config.create() == True:
-    config.write('''{
-    "system": {
-        "ignore_folders": [
-            "__pycache__",
-            "System Volume Information",
-            "home",
-            "docs",
-            "examples",
-            "lib"
-        ],
-        "autorun": {
-            ".": [
-                "telegram_bot.py
-            ]
+    config.write({
+        "system": {
+            "ignore_folders": [
+                "__pycache__",
+                "System Volume Information",
+                "home",
+                "docs",
+                "examples",
+                "lib"
+            ],
+            "autorun": {
+                ".": [
+                    "telegram_bot.py"
+                ]
+            },
+            "server_name": ""
         },
-        "server_name": ""
-    },
-    "bot": {
-        "token": "",
-        "admins_chat_id": []
-    },
-    "users": {},
-    "link": {}
-}''')
+        "bot": {
+            "token": "",
+            "admins_chat_id": []
+        },
+        "users": {},
+        "link": {}
+    })
     
 
     logger.warning('Please fill in the data in config.json')
