@@ -63,7 +63,7 @@ config = db.file('config')
 
 # Checking and creating a config
 if config.create() == True:
-    config.write('''{
+    config.write({
     "system": {
         "ignore_folders": [
             "__pycache__",
@@ -73,7 +73,7 @@ if config.create() == True:
         ],
         "autorun": {
             ".": [
-                "telegram_bot.py
+                "telegram_bot.py"
             ]
         },
         "server_name": ""
@@ -84,7 +84,7 @@ if config.create() == True:
     },
     "users": {},
     "link": {}
-}''')
+})
     
 
     logger.info("Default config successful writed in config.json")
@@ -126,6 +126,18 @@ TOKEN = get_config().get('bot', {}).get('token')
 ADMINS_CHAT = get_config().get('bot', {}).get('admins_chat_id', [])
 
 
+#
+def check_admins_is_users():
+    for user_id in ADMINS_CHAT:
+        cfg = get_config()
+        if user_id not in cfg.get('users', {}):
+            cfg['users'][user_id] = {
+                "cmd": ROOT_DIR
+            }
+            update_config(cfg)
+
+
+check_admins_is_users()
 # Function to get folder contents
 def parse_folder(dir: str = None) -> dict:
     result = {
