@@ -439,6 +439,50 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
     
 
+    # Handle write command states
+    user_data = context.user_data
+
+
+    if 'write_state' in user_data:
+        file_path = user_data.get('write_file')        
+        current_state = user_data['write_state']
+
+
+        logger.info(f"Processing write state {current_state} for {user_id}")
+
+
+        if current_state == 'awaiting_content':
+            try:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(text)
+
+
+                logger.info(f"Text set to {file_path}")
+
+
+                del user_data['write_state']
+
+
+                await update.message.reply_text("📝 Текст успешно записан в файл")
+
+
+            except Exception as e:
+                logger.error(f"Write error: {str(e)}")
+
+
+                await update.message.reply_text("❌ Ошибка записи в файл")
+
+
+            return
+        
+
+    elif user_data.get('pending_upload'):
+        await handle_upload_confirmation(update, context)
+
+
+        return
+
+
     logger.info(f"User {user_id} have permissions")
 
     
@@ -517,7 +561,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
                     return
 
-                
+
                 open(os.path.join(current_dir, ' '.join(args)), 'a').close()
 
 
@@ -614,6 +658,46 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read(4090) + "..." if os.path.getsize(file_path) > 4096 else f.read()
                     response = f"<code>{content}</code>"
+                
+
+            case 'write':
+                if not args:
+                    await update.message.reply_text("📛 Укажите название файла")
+
+
+                    logger.info(f"Write command without args from {user_id}")
+
+
+                    return
+                
+
+                file_name = ' '.join(args)
+                file_path = os.path.join(current_dir, file_name)
+
+
+                logger.info(f"Write command to {file_path}")
+
+
+                if os.path.exists(file_path):
+                    if os.path.isdir(file_path):
+                        await update.message.reply_text("📁 Это папка, укажите файл")
+
+
+                        return
+
+
+                else:
+                    open(file_path, 'a').close()
+                    
+
+                user_data['write_file'] = file_path  
+                user_data['write_state'] = 'awaiting_content'
+
+
+                await update.message.reply_text("📝 Введите текст или 'exit' для выхода:")
+
+
+                return
 
         
             case 'download':
@@ -813,15 +897,13 @@ async def handle_upload_confirmation(update: Update, context: ContextTypes.DEFAU
 
 
                 await update.message.reply_text(
-                    f"✅ Файл {file_info['file_name']} перезаписан", 
-                    reply_markup=ReplyKeyboardMarkup(get_buttons(), one_time_keyboard=True)
+                    f"✅ Файл {file_info['file_name']} перезаписан"
                 )
 
 
             else:
                 await update.message.reply_text(
-                    "❌ Загрузка отменена", 
-                    reply_markup=ReplyKeyboardMarkup(get_buttons(), one_time_keyboard=True)
+                    "❌ Загрузка отменена",
                 )
 
             
@@ -894,7 +976,6 @@ def main() -> None:
 
     # Registering handlers
     handlers = [
-        MessageHandler(filters.Text(['Да', 'Нет']) & ~filters.COMMAND, handle_upload_confirmation),
         CommandHandler("start", start),
         CommandHandler("user", user),
         CommandHandler("help", help),
