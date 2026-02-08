@@ -18,10 +18,18 @@ npm i pm2 -g
 python main.py supervisor
 ```
 
-### Заполнение конфигурационного файла
+### Настройка окружения
 ```bash
-vim config.json
+vim .env
 ```
+
+Основные параметры:
+- `BOT_TOKEN`
+- `BOT_ADMINS_CHAT_ID` (через запятую)
+- `BOT_IGNORE_FOLDERS` (через запятую)
+- `BOT_AUTORUN`
+
+Данные рантайма сохраняются в `storage/data.json`.
 
 ### Второй запуск
 ```bash
@@ -49,6 +57,7 @@ docker compose down
 # Структура проекта
 
 - `main.py` — единый entrypoint (`supervisor` или `telegram`).
-- `bot/common/` — общие модули конфигурации и логирования.
+- `bot/common/` — общие модули конфигурации, логирования и env-настроек.
+- `bot/database/` — слой адаптера БД на базе `dbase`.
 - `bot/supervisor/` — мониторинг интернета + управление PM2-процессами.
 - `bot/telegram/` — обработчики Telegram-бота и shell/file-утилиты.

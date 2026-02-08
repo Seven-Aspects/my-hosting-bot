@@ -1,4 +1,3 @@
 __pycache__/
 System Volume Information/
-
-config.json
+storage/data.json

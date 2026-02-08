@@ -2,10 +2,11 @@ import logging
 import os
 
 from telegram import ReplyKeyboardMarkup, Update
-from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 from bot.common.config_store import ConfigStore
 from bot.common.logger import setup_logging
+from bot.common.settings import Settings, load_settings
 from bot.telegram.shell import execute, format_ls
 
 
@@ -15,23 +16,20 @@ ROOT_DIR = os.getcwd()
 class TelegramHostingBot:
     def __init__(self) -> None:
         self.logger = setup_logging()
+        self.settings: Settings = load_settings()
         self.config_store = ConfigStore(".")
 
     def bootstrap(self) -> dict:
-        if self.config_store.ensure():
-            self.logger.warning("Please fill in the data in config.json")
-            raise SystemExit(0)
-
-        self.config_store.ensure_admins_are_users(ROOT_DIR)
+        self.config_store.ensure()
+        self.config_store.ensure_admins_are_users(ROOT_DIR, self.settings.admins_chat_id)
         return self.config_store.read()
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        cfg = self.config_store.read()
+        data = self.config_store.read()
         user_id = str(update.effective_user.id)
-        if user_id not in cfg.get("users", {}):
+        if user_id not in data.get("users", {}):
             await update.message.reply_text("⛔ У вас нет доступа")
             return
-
         buttons = [["ls", "cd .."], ["pm2 ls"]]
         await update.message.reply_text(
             "Бот активен. Отправляйте shell-команды.",
@@ -39,14 +37,14 @@ class TelegramHostingBot:
         )
 
     async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        cfg = self.config_store.read()
+        data = self.config_store.read()
         user_id = str(update.effective_user.id)
         text = (update.message.text or "").strip()
 
-        if user_id not in cfg.get("users", {}):
+        if user_id not in data.get("users", {}):
             return
 
-        current_dir = self.config_store.get_user_cwd(cfg, user_id, ROOT_DIR)
+        current_dir = self.config_store.get_user_cwd(data, user_id, ROOT_DIR)
         args = text.split()
         if not args:
             return
@@ -57,23 +55,14 @@ class TelegramHostingBot:
             if not os.path.isdir(target):
                 await update.message.reply_text("❌ Директория не существует")
                 return
-
-            self.config_store.set_user_cwd(cfg, user_id, target)
-            self.config_store.write(cfg)
-            msg = format_ls(
-                cfg.get("system", {}).get("server_name", "Server"),
-                update.message.from_user.mention_html(),
-                target,
-            )
+            self.config_store.set_user_cwd(data, user_id, target)
+            self.config_store.write(data)
+            msg = format_ls(self.settings.server_name, update.message.from_user.mention_html(), target)
             await update.message.reply_html(msg)
             return
 
         if cmd == "ls":
-            msg = format_ls(
-                cfg.get("system", {}).get("server_name", "Server"),
-                update.message.from_user.mention_html(),
-                current_dir,
-            )
+            msg = format_ls(self.settings.server_name, update.message.from_user.mention_html(), current_dir)
             await update.message.reply_html(msg)
             return
 
@@ -81,13 +70,12 @@ class TelegramHostingBot:
         await update.message.reply_text(output[:3900])
 
     def run(self) -> None:
-        cfg = self.bootstrap()
-        token = cfg.get("bot", {}).get("token", "")
-        if not token:
-            self.logger.error("Bot token is empty in config.json")
+        self.bootstrap()
+        if not self.settings.bot_token:
+            self.logger.error("BOT_TOKEN is empty in .env")
             raise SystemExit(1)
 
-        application = ApplicationBuilder().token(token).build()
+        application = ApplicationBuilder().token(self.settings.bot_token).build()
         application.add_handler(CommandHandler("start", self.start))
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
 
