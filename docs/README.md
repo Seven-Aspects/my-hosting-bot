@@ -26,3 +26,21 @@ vim config.json
 ```bash
 pm2 start application_start.py
 ```
+
+
+# Docker
+
+### Build and start
+```bash
+docker compose up -d --build
+```
+
+### Check logs
+```bash
+docker compose logs -f bot
+```
+
+### Stop
+```bash
+docker compose down
+```

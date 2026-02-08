@@ -1,0 +1,11 @@
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: my-hosting-bot
+    restart: unless-stopped
+    working_dir: /app
+    command: ["python", "application_start.py"]
+    volumes:
+      - ./:/app
