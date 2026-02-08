@@ -1,8 +1,11 @@
 import logging
 import os
+import time
 
 from telegram import ReplyKeyboardMarkup, Update
+from telegram.error import NetworkError
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram.request import HTTPXRequest
 
 from bot.common.config_store import ConfigStore
 from bot.common.logger import setup_logging
@@ -11,6 +14,7 @@ from bot.telegram.shell import execute, format_ls
 
 
 ROOT_DIR = os.getcwd()
+RETRY_DELAY_SECONDS = 10
 
 
 class TelegramHostingBot:
@@ -69,18 +73,36 @@ class TelegramHostingBot:
         output = execute(args, current_dir)
         await update.message.reply_text(output[:3900])
 
+    def _build_application(self):
+        request = HTTPXRequest(http_version="1.1")
+        updates_request = HTTPXRequest(http_version="1.1")
+        application = (
+            ApplicationBuilder()
+            .token(self.settings.bot_token)
+            .request(request)
+            .get_updates_request(updates_request)
+            .build()
+        )
+        application.add_handler(CommandHandler("start", self.start))
+        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
+        return application
+
     def run(self) -> None:
         self.bootstrap()
         if not self.settings.bot_token:
             self.logger.error("BOT_TOKEN is empty in .env")
             raise SystemExit(1)
 
-        application = ApplicationBuilder().token(self.settings.bot_token).build()
-        application.add_handler(CommandHandler("start", self.start))
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
-
         logging.getLogger("httpx").setLevel(logging.WARNING)
-        application.run_polling(drop_pending_updates=True)
+
+        while True:
+            application = self._build_application()
+            try:
+                application.run_polling(drop_pending_updates=True)
+                return
+            except NetworkError as exc:
+                self.logger.warning("Telegram network error: %s", exc)
+                time.sleep(RETRY_DELAY_SECONDS)
 
 
 def run_telegram_bot() -> None:
