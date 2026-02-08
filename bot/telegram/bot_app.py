@@ -4,9 +4,9 @@ import os
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
 
-from hosting_bot.common.config_store import ConfigStore
-from hosting_bot.common.logger import setup_logging
-from hosting_bot.telegram.shell import execute, format_ls
+from bot.common.config_store import ConfigStore
+from bot.common.logger import setup_logging
+from bot.telegram.shell import execute, format_ls
 
 
 ROOT_DIR = os.getcwd()

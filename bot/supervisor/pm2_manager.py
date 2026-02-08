@@ -2,6 +2,7 @@ import logging
 import os
 import platform
 import re
+import shlex
 import subprocess
 
 
@@ -25,15 +26,24 @@ class PM2Manager:
                 processes.append([parts[0], f"{parts[1]}.py"])
         return processes
 
-    def start_file(self, folder: str, file_name: str) -> None:
+    def start_file(self, folder: str, command: str) -> None:
+        parts = shlex.split(command)
+        if not parts:
+            return
+        file_name = parts[0]
         full_path = os.path.join(folder, file_name)
         if not os.path.exists(full_path):
             self.logger.error("[pm2] file not found: %s", full_path)
             return
 
+        pm2_command = [PM2_CMD, "start", full_path]
+        if len(parts) > 1:
+            pm2_command.extend(["--interpreter", "python", "--"])
+            pm2_command.extend(parts[1:])
+
         try:
             result = subprocess.run(
-                [PM2_CMD, "start", full_path],
+                pm2_command,
                 check=True,
                 capture_output=True,
                 text=True,
@@ -41,13 +51,13 @@ class PM2Manager:
                 cwd=folder,
             )
         except subprocess.CalledProcessError as exc:
-            self.logger.error("[pm2] failed to start %s: %s", file_name, exc.stderr)
+            self.logger.error("[pm2] failed to start %s: %s", command, exc.stderr)
             return
 
         for process_id, process_name in self.parse_processes(result.stdout):
             if process_name == file_name:
-                self.process_ids[file_name] = process_id
-                self.logger.info("started %s with id=%s", file_name, process_id)
+                self.process_ids[command] = process_id
+                self.logger.info("started %s with id=%s", command, process_id)
                 return
 
     def start_from_autorun(self, root_dir: str, autorun: dict[str, list[str]], ignore_folders: list[str]) -> None:
@@ -57,11 +67,11 @@ class PM2Manager:
                 continue
             if rel_folder in ignore_folders:
                 continue
-            for file_name in files:
-                self.start_file(folder, file_name)
+            for command in files:
+                self.start_file(folder, command)
 
     def stop_all(self) -> None:
-        for file_name, process_id in list(self.process_ids.items()):
+        for command, process_id in list(self.process_ids.items()):
             try:
                 subprocess.run(
                     [PM2_CMD, "stop", process_id],
@@ -70,7 +80,7 @@ class PM2Manager:
                     stderr=subprocess.DEVNULL,
                     encoding="utf-8",
                 )
-                self.logger.info("stopped %s id=%s", file_name, process_id)
+                self.logger.info("stopped %s id=%s", command, process_id)
             except subprocess.CalledProcessError:
                 self.logger.warning("unable to stop id=%s", process_id)
-            del self.process_ids[file_name]
+            del self.process_ids[command]

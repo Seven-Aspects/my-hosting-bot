@@ -1,7 +1,8 @@
 module.exports = {
     apps: [{
       name: "my-hosting-bot",
-      script: "telegram_bot.py",
+      script: "main.py",
+      args: "telegram",
       instances: 1,
       watch: true,
       env: {

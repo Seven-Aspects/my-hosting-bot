@@ -15,7 +15,7 @@ npm i pm2 -g
 
 ### First run
 ```bash
-python application_start.py
+python main.py supervisor
 ```
 
 ### Filling in the configuration file
@@ -25,7 +25,7 @@ vim config.json
 
 ### Second run
 ```bash
-pm2 start application_start.py
+pm2 start main.py --interpreter python -- telegram
 ```
 
 
@@ -48,8 +48,7 @@ docker compose down
 
 # Project structure
 
-- `application_start.py` — lightweight entrypoint for supervisor mode.
-- `telegram_bot.py` — lightweight entrypoint for Telegram mode.
-- `hosting_bot/common/` — shared config and logging modules.
-- `hosting_bot/supervisor/` — internet monitoring + PM2 process control.
-- `hosting_bot/telegram/` — bot handlers and shell/file helpers.
+- `main.py` — unified entrypoint (`supervisor` or `telegram` mode).
+- `bot/common/` — shared config and logging modules.
+- `bot/supervisor/` — internet monitoring + PM2 process control.
+- `bot/telegram/` — bot handlers and shell/file helpers.

@@ -1,7 +1,7 @@
 import os
 from typing import Any
 
-from lib.DataBaze.databaze import DataBaze
+from bot.database import DataBaze
 
 
 DEFAULT_CONFIG = {
@@ -11,10 +11,10 @@ DEFAULT_CONFIG = {
             "System Volume Information",
             "docs",
             "lib",
-            "hosting_bot",
+            "bot",
         ],
         "autorun": {
-            ".": ["telegram_bot.py"],
+            ".": ["main.py telegram"],
         },
         "server_name": "",
     },

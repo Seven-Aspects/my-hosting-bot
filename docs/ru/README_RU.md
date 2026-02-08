@@ -15,7 +15,7 @@ npm i pm2 -g
 
 ### Первый запуск
 ```bash
-python application_start.py
+python main.py supervisor
 ```
 
 ### Заполнение конфигурационного файла
@@ -25,7 +25,7 @@ vim config.json
 
 ### Второй запуск
 ```bash
-pm2 start application_start.py
+pm2 start main.py --interpreter python -- telegram
 ```
 
 
@@ -48,8 +48,7 @@ docker compose down
 
 # Структура проекта
 
-- `application_start.py` — тонкий entrypoint для режима supervisor.
-- `telegram_bot.py` — тонкий entrypoint для Telegram-режима.
-- `hosting_bot/common/` — общие модули конфигурации и логирования.
-- `hosting_bot/supervisor/` — мониторинг интернета + управление PM2-процессами.
-- `hosting_bot/telegram/` — обработчики Telegram-бота и shell/file-утилиты.
+- `main.py` — единый entrypoint (`supervisor` или `telegram`).
+- `bot/common/` — общие модули конфигурации и логирования.
+- `bot/supervisor/` — мониторинг интернета + управление PM2-процессами.
+- `bot/telegram/` — обработчики Telegram-бота и shell/file-утилиты.

@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python", "application_start.py"]
+CMD ["python", "main.py", "supervisor"]

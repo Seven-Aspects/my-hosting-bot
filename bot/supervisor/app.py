@@ -1,9 +1,9 @@
 import time
 
-from hosting_bot.common.config_store import ConfigStore
-from hosting_bot.common.logger import setup_logging
-from hosting_bot.supervisor.network import check_internet
-from hosting_bot.supervisor.pm2_manager import PM2Manager
+from bot.common.config_store import ConfigStore
+from bot.common.logger import setup_logging
+from bot.supervisor.network import check_internet
+from bot.supervisor.pm2_manager import PM2Manager
 
 
 CHECK_INTERVAL = 180
