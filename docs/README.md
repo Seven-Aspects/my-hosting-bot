@@ -3,6 +3,7 @@
 ### Install python modules
 ```bash
 pip install -r requirements.txt
+# includes dbase from GitHub branch codex/analyze-repository-for-improvements
 ```
 
 ### Install nodejs module
@@ -14,15 +15,49 @@ npm i pm2 -g
 
 ### First run
 ```bash
-python application_start.py
+python main.py supervisor
 ```
 
-### Filling in the configuration file
+### Environment configuration
 ```bash
-vim config.json
+vim .env
 ```
+
+Main editable values:
+- `BOT_TOKEN`
+- `BOT_ADMINS_CHAT_ID` (comma separated)
+- `BOT_IGNORE_FOLDERS` (comma separated)
+- `BOT_AUTORUN`
+
+Runtime data is saved to `data/data.json`.
 
 ### Second run
 ```bash
-pm2 start application_start.py
+pm2 start main.py --interpreter python -- telegram
 ```
+
+
+# Docker
+
+### Build and start
+```bash
+docker compose up -d --build
+```
+
+### Check logs
+```bash
+docker compose logs -f bot
+```
+
+### Stop
+```bash
+docker compose down
+```
+
+# Project structure
+
+- `main.py` — unified entrypoint (`supervisor` or `telegram` mode).
+- `bot/common/` — shared config/logging and env settings.
+- `bot/database/` — database adapter layer based on `dbase`.
+- `bot/supervisor/` — internet monitoring + PM2 process control.
+- `bot/telegram/` — bot handlers and shell/file helpers.
