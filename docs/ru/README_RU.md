@@ -44,3 +44,11 @@ docker compose logs -f bot
 ```bash
 docker compose down
 ```
+
+# Структура проекта
+
+- `application_start.py` — тонкий entrypoint для режима supervisor.
+- `telegram_bot.py` — тонкий entrypoint для Telegram-режима.
+- `hosting_bot/common/` — общие модули конфигурации и логирования.
+- `hosting_bot/supervisor/` — мониторинг интернета + управление PM2-процессами.
+- `hosting_bot/telegram/` — обработчики Telegram-бота и shell/file-утилиты.
