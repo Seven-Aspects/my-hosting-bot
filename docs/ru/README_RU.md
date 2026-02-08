@@ -29,7 +29,7 @@ vim .env
 - `BOT_IGNORE_FOLDERS` (через запятую)
 - `BOT_AUTORUN`
 
-Данные рантайма сохраняются в `storage/data.json`.
+Данные рантайма сохраняются в `data/data.json`.
 
 ### Второй запуск
 ```bash

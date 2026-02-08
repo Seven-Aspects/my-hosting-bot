@@ -29,7 +29,7 @@ Main editable values:
 - `BOT_IGNORE_FOLDERS` (comma separated)
 - `BOT_AUTORUN`
 
-Runtime data is saved to `storage/data.json`.
+Runtime data is saved to `data/data.json`.
 
 ### Second run
 ```bash

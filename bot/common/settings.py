@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 
 DEFAULT_AUTORUN = {".": ["main.py telegram"]}
-DEFAULT_IGNORE_FOLDERS = ["__pycache__", "System Volume Information", "docs", "storage", "bot", ".git"]
+DEFAULT_IGNORE_FOLDERS = ["__pycache__", "System Volume Information", "docs", "data", "storage", "bot", ".git"]
 
 
 def _parse_list(value: str) -> list[str]:

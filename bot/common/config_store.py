@@ -13,7 +13,7 @@ DEFAULT_DATA = {
 class ConfigStore:
     def __init__(self, root: str = ".") -> None:
         self.root = root
-        storage_path = os.path.join(root, "storage")
+        storage_path = os.path.join(root, "data")
         self._db = DataBaze(storage_path)
         self._config_file = self._db.file("data")
 
