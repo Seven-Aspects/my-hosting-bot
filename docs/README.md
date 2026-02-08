@@ -3,6 +3,7 @@
 ### Install python modules
 ```bash
 pip install -r requirements.txt
+# includes dbase from GitHub branch codex/analyze-repository-for-improvements
 ```
 
 ### Install nodejs module

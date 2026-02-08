@@ -3,6 +3,7 @@
 ### Установка Python модуля
 ```bash
 pip install -r requirements.txt
+# включает dbase из GitHub-ветки codex/analyze-repository-for-improvements
 ```
 
 ### Установка NodeJS модуля
